@@ -6,17 +6,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/you06/sqlsmith-client/executor"
 	"github.com/you06/sqlsmith-client/util"
+	"github.com/juju/errors"
 	"github.com/ngaut/log"
 )
 
 var (
-	cfg          *config.Config
 	printVersion bool
 	dsn1         string
 	dsn2         string
-	testMode     bool
-	taskID       int
 )
 
 func init() {
@@ -31,6 +30,23 @@ func main() {
 		util.PrintInfo()
 		os.Exit(0)
 	}
+
+	var (
+		exec *executor.Executor
+		err error
+	)
+	if dsn1 == "" {
+		log.Fatalf("dsn1 can not be empty")
+	} else if dsn2 == "" {
+		exec, err = executor.New(dsn1)
+	} else {
+		exec, err = executor.NewABTest(dsn1, dsn2)
+	}
+	if err != nil {
+		log.Fatalf("create executor error %v", errors.ErrorStack(err))
+	}
+
+	go exec.Start()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc,
