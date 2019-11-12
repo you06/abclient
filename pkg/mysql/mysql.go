@@ -24,6 +24,16 @@ func (conn *DBConnect) MustExec(query string, args ...interface{}) sql.Result {
 	return r
 }
 
+// Exec execute sql
+func (conn *DBConnect) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return conn.db.Exec(query, args...)
+}
+
+// Query execute select statement
+func (conn *DBConnect) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return conn.db.Query(query, args...)
+}
+
 // GetDB get real db object
 func (conn *DBConnect) GetDB() *sql.DB {
 	return conn.db
