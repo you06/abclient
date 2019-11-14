@@ -32,7 +32,9 @@ func (e *Executor) abTest() {
 		}
 
 		if err != nil {
-			log.Errorf("Exec SQL %s error %v\n", sql.SQLStmt, err)
+			e.logger.Infof("[FAIL] Exec SQL %s error %v", sql.SQLStmt, err)
+		} else {
+			e.logger.Infof("[SUCCESS] Exec SQL %s success", sql.SQLStmt)
 		}
 	}
 }
@@ -68,6 +70,7 @@ func (e *Executor) abTestSelect(sql string) error {
 	}()
 	wg.Wait()
 
+	log.Info("select abtest err", err1, err2)
 	if err := util.ErrorMustSame(err1, err2); err != nil {
 		return err
 	}

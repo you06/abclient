@@ -18,6 +18,9 @@ var (
 	dsn1         string
 	dsn2         string
 	printSchema  bool
+	clearDB      bool
+	logPath      string
+	reproduce    string
 )
 
 func init() {
@@ -25,6 +28,9 @@ func init() {
 	flag.BoolVar(&printSchema, "schema", false, "print schema and exit")
 	flag.StringVar(&dsn1, "dsn1", "", "dsn1")
 	flag.StringVar(&dsn2, "dsn2", "", "dsn2")
+	flag.BoolVar(&clearDB, "clear", false, "drop all tables in target database and then start testing")
+	flag.StringVar(&logPath, "log", "", "log path")
+	flag.StringVar(&reproduce, "-re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
 }
 
 func main() {
@@ -37,13 +43,18 @@ func main() {
 	var (
 		exec *executor.Executor
 		err error
+		opt = executor.Option{}
 	)
+
+	opt.Clear = clearDB
+	opt.Log = logPath
+
 	if dsn1 == "" {
 		log.Fatalf("dsn1 can not be empty")
 	} else if dsn2 == "" {
-		exec, err = executor.New(dsn1)
+		exec, err = executor.New(dsn1, &opt)
 	} else {
-		exec, err = executor.NewABTest(dsn1, dsn2)
+		exec, err = executor.NewABTest(dsn1, dsn2, &opt)
 	}
 	if err != nil {
 		log.Fatalf("create executor error %v", errors.ErrorStack(err))

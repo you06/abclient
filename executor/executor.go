@@ -2,15 +2,17 @@ package executor
 
 import (
 	"fmt"
+	"path"
 	"regexp"
 	"github.com/you06/sqlsmith-client/connection"
+	"github.com/you06/sqlsmith-client/pkg/logger"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
 )
 
 var (
-	dbnameRegex = regexp.MustCompile(`([a-z0-9A-Z]+)$`)
+	dbnameRegex = regexp.MustCompile(`([a-z0-9A-Z_]+)$`)
 )
 
 // SQLType enums for SQL types
@@ -32,6 +34,12 @@ type SQL struct {
 	SQLStmt string
 }
 
+// Option struct
+type Option struct {
+	Clear bool
+	Log string
+}
+
 // Executor define test executor
 type Executor struct {
 	dsn1   string
@@ -43,11 +51,25 @@ type Executor struct {
 	dbname string
 	mode   string
 	ch     chan *SQL
+	opt    *Option
+	logger *logger.Logger
 }
 
 // New create Executor
-func New(dsn string) (*Executor, error) {
-	conn, err := connection.New(dsn)
+func New(dsn string, opt *Option) (*Executor, error) {
+	var connLogPath, executorLogPath string
+	if opt.Log != "" {
+		connLogPath = path.Join(opt.Log, "single-conn.log")
+		executorLogPath = path.Join(opt.Log, "single-test.log")
+	}
+
+	conn, err := connection.New(dsn, &connection.Option{
+		Log: connLogPath,
+	})
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	l, err := logger.New(executorLogPath)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -57,20 +79,36 @@ func New(dsn string) (*Executor, error) {
 		mode:  "single",
 		ch: make(chan *SQL, 1),
 		dbname: dbnameRegex.FindString(dsn),
+		opt: opt,
+		logger: l,
 	}, nil
 }
 
 // NewABTest create abtest Executor
-func NewABTest(dsn1, dsn2 string) (*Executor, error) {
-	conn1, err := connection.New(dsn1)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-	conn2, err := connection.New(dsn2)
-	if err != nil {
-		return nil, errors.Trace(err)
+func NewABTest(dsn1, dsn2 string, opt *Option) (*Executor, error) {
+	var conn1LogPath, conn2LogPath, executorLogPath string
+	if opt.Log != "" {
+		conn1LogPath = path.Join(opt.Log, "ab-conn1.log")
+		conn2LogPath = path.Join(opt.Log, "ab-conn2.log")
+		executorLogPath = path.Join(opt.Log, "ab-test.log")
 	}
 
+	conn1, err := connection.New(dsn1, &connection.Option{
+		Log: conn1LogPath,
+	})
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	conn2, err := connection.New(dsn2, &connection.Option{
+		Log: conn2LogPath,
+	})
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	l, err := logger.New(executorLogPath)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	return &Executor{
 		dsn1:  dsn1,
 		dsn2:  dsn2,
@@ -79,6 +117,8 @@ func NewABTest(dsn1, dsn2 string) (*Executor, error) {
 		mode:  "abtest",
 		ch: make(chan *SQL, 1),
 		dbname: dbnameRegex.FindString(dsn1),
+		opt: opt,
+		logger: l,
 	}, nil
 }
 

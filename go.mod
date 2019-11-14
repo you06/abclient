@@ -14,12 +14,12 @@ require (
 	github.com/pingcap/tipb v0.0.0-20191112054303-0b0ad0d4a92e // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
 	github.com/shirou/gopsutil v2.19.10+incompatible // indirect
-	github.com/you06/sqlsmith-go v0.0.0-20191112151943-436da782c588
+	github.com/you06/sqlsmith-go v0.0.0-20191114114435-55030b93a8b4
 	go.uber.org/multierr v1.4.0 // indirect
-	go.uber.org/zap v1.12.0 // indirect
+	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect
-	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 // indirect
-	golang.org/x/tools v0.0.0-20191112005509-a3f652f18032 // indirect
+	golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056 // indirect
+	golang.org/x/tools v0.0.0-20191113232020-e2727e816f5a // indirect
 )
 
 replace github.com/pingcap/tidb => github.com/you06/tidb v1.1.0-beta.0.20191107083526-0edcbcc52610

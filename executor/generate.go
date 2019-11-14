@@ -11,13 +11,15 @@ func (e *Executor) smithGenerate() {
 	e.prepare()
 	e.ch <- &SQL{
 		SQLType: SQLTypeReloadSchema,
-	}	
+	}
+	log.Info("ready to generate")
 	for {
 		var (
 			err error
 			rd = rand.Intn(100)
 		)
-
+		// rd = 100
+		log.Info(rd)
 		if rd == 0 {
 			err = e.generateDDLCreate()
 		} else if rd < 20 {
