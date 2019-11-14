@@ -81,3 +81,9 @@ func (c *Connection) ExecDDL(query string, args ...interface{}) error {
 	c.logSQL(query, time.Now().Sub(start), err)
 	return errors.Trace(err)
 }
+
+// Exec do any exec actions
+func (c *Connection) Exec(stmt string) error {
+	_, err := c.db.Exec(stmt)
+	return errors.Trace(err)
+}

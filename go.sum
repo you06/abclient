@@ -230,6 +230,8 @@ github.com/you06/sqlsmith-go v0.0.0-20191114072511-52b60378a764 h1:qvhzrlHK+LPPi
 github.com/you06/sqlsmith-go v0.0.0-20191114072511-52b60378a764/go.mod h1:7ZMe1VQcYGDCuN5ac57PandbVtEUyvvR7RcD7A78Oh0=
 github.com/you06/sqlsmith-go v0.0.0-20191114114435-55030b93a8b4 h1:GjvfVpNctpeUPUuBEk8w7NV7zXOtQfZxzf52eSnoqN0=
 github.com/you06/sqlsmith-go v0.0.0-20191114114435-55030b93a8b4/go.mod h1:7ZMe1VQcYGDCuN5ac57PandbVtEUyvvR7RcD7A78Oh0=
+github.com/you06/sqlsmith-go v0.0.0-20191114120430-4d6971f28ad8 h1:9ELVvfRxcYDMan7Pc9rrs7lLwLsH4skSTRCyFAvXV+I=
+github.com/you06/sqlsmith-go v0.0.0-20191114120430-4d6971f28ad8/go.mod h1:7ZMe1VQcYGDCuN5ac57PandbVtEUyvvR7RcD7A78Oh0=
 github.com/you06/tidb v1.1.0-beta.0.20191107083526-0edcbcc52610 h1:nrYl/UyqbBMhUmCoT2g4K3b77DKwPA4fvui6HR3/lBk=
 github.com/you06/tidb v1.1.0-beta.0.20191107083526-0edcbcc52610/go.mod h1:N8LOrZQBeRpnWaQblZGc1tR9+Le7J2bHAGqSJ4NaNEY=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=

@@ -3,6 +3,7 @@ package executor
 import (
 	"fmt"
 	"path"
+	"os"
 	"regexp"
 	"github.com/you06/sqlsmith-client/connection"
 	"github.com/you06/sqlsmith-client/pkg/logger"
@@ -26,6 +27,8 @@ const (
 	SQLTypeDMLInsert
 	SQLTypeDMLDelete
 	SQLTypeDDLCreate
+	SQLTypeExec
+	SQLTypeExit
 )
 
 // SQL struct
@@ -38,6 +41,7 @@ type SQL struct {
 type Option struct {
 	Clear bool
 	Log string
+	Reproduce string
 }
 
 // Executor define test executor
@@ -137,7 +141,11 @@ func (e *Executor) Start() {
 	if err := e.init(); err != nil {
 		log.Fatalf("init failed %v\n", errors.ErrorStack(err))
 	}
-	go e.smithGenerate()
+	if e.opt.Reproduce != "" {
+		go e.reproduce()
+	} else {
+		go e.smithGenerate()
+	}
 	switch e.mode {
 	case "single":
 		e.singleTest()
@@ -156,4 +164,10 @@ func (e *Executor) PrintSchema() error {
 		fmt.Printf("{\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"},\n", item[0], item[1], item[2], item[3], item[4])
 	}
 	return nil
+}
+
+// Stop exit process
+func (e *Executor) Stop(msg string) {
+	log.Infof("[STOP] message: %s\n", msg)
+	os.Exit(0)
 }

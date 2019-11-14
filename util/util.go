@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/go-sql-driver/mysql"
@@ -45,4 +46,14 @@ func ErrorMustSame(err1, err2 error) error {
 	}
 
 	return nil
+}
+
+// FileExists checks if a file exists and is not a directory before we
+// try using it to prevent further errors.
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+			return false
+	}
+	return !info.IsDir()
 }

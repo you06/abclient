@@ -29,6 +29,10 @@ func (e *Executor) abTest() {
 			err = e.abTestDelete(sql.SQLStmt)
 		case SQLTypeDDLCreate:
 			err = e.abTestCreateTable(sql.SQLStmt)
+		case SQLTypeExec:
+			e.abTestExec(sql.SQLStmt)
+		case SQLTypeExit:
+			e.Stop("receive exit SQL signal")
 		}
 
 		if err != nil {
@@ -193,4 +197,21 @@ func (e *Executor) abTestCreateTable(sql string) error {
 		return err
 	}
 	return nil
+}
+
+// just execute
+func (e *Executor) abTestExec(sql string) {
+	var (
+		wg sync.WaitGroup
+	)
+	wg.Add(2)
+	go func() {
+		_ = e.conn1.Exec(sql)
+		wg.Done()
+	}()
+	go func() {
+		_ = e.conn2.Exec(sql)
+		wg.Done()
+	}()
+	wg.Wait()
 }

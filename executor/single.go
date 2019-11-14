@@ -26,6 +26,10 @@ func (e *Executor) singleTest() {
 			err = e.singleTestDelete(sql.SQLStmt)
 		case SQLTypeDDLCreate:
 			err = e.singleTestCreateTable(sql.SQLStmt)
+		case SQLTypeExec:
+			e.singleTestExec(sql.SQLStmt)
+		case SQLTypeExit:
+			e.Stop("receive exit SQL signal")
 		}
 
 		if err != nil {
@@ -69,4 +73,10 @@ func (e *Executor) singleTestDelete(sql string) error {
 // DDL
 func (e *Executor) singleTestCreateTable(sql string) error {
 	return errors.Trace(e.conn1.ExecDDL(sql))
+}
+
+
+// just execute
+func (e *Executor) singleTestExec(sql string) {
+	_ = e.conn1.Exec(sql)
 }

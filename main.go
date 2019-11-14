@@ -30,7 +30,7 @@ func init() {
 	flag.StringVar(&dsn2, "dsn2", "", "dsn2")
 	flag.BoolVar(&clearDB, "clear", false, "drop all tables in target database and then start testing")
 	flag.StringVar(&logPath, "log", "", "log path")
-	flag.StringVar(&reproduce, "-re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
+	flag.StringVar(&reproduce, "re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
 }
 
 func main() {
@@ -48,6 +48,7 @@ func main() {
 
 	opt.Clear = clearDB
 	opt.Log = logPath
+	opt.Reproduce = reproduce
 
 	if dsn1 == "" {
 		log.Fatalf("dsn1 can not be empty")
@@ -77,6 +78,5 @@ func main() {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 
-	sig := <-sc
-	log.Infof("Got signal %d to exit.", sig)
+	log.Infof("Got signal %d to exit.", <-sc)
 }
