@@ -14,7 +14,7 @@ require (
 	github.com/pingcap/tipb v0.0.0-20191112054303-0b0ad0d4a92e // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
 	github.com/shirou/gopsutil v2.19.10+incompatible // indirect
-	github.com/you06/sqlsmith-go v0.0.0-20191114120430-4d6971f28ad8
+	github.com/you06/sqlsmith-go v0.0.0-20191114131334-d2ad09bd742d
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect

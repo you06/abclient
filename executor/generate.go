@@ -19,7 +19,6 @@ func (e *Executor) smithGenerate() {
 			rd = rand.Intn(100)
 		)
 		// rd = 100
-		log.Info(rd)
 		if rd == 0 {
 			err = e.generateDDLCreate()
 		} else if rd < 20 {

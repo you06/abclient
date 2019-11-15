@@ -48,7 +48,7 @@ func (e *Executor) reproduceFromFile(file string, endLineNum int) {
 	for scanner.Scan() {
 		lineNum++
 		if lineNum == endLineNum {
-			return
+			break
 		}
 		line := scanner.Text()
 		var m []string
@@ -62,12 +62,18 @@ func (e *Executor) reproduceFromFile(file string, endLineNum int) {
 		if len(m) != 2 {
 			continue
 		}
+		if strings.HasPrefix(strings.Trim(strings.ToLower(m[1]), " "), "select") {
+			continue
+		}
 		e.ch <- &SQL{
 			SQLType: SQLTypeExec,
 			SQLStmt: m[1],
 		}
+		if lineNum % 100 == 0 {
+			log.Infof("Progress: %d/%d\n", lineNum, endLineNum)
+		}
 	}
 	e.ch <- &SQL{
-		SQLType: SQLTypeExec,
+		SQLType: SQLTypeExit,
 	}
 }

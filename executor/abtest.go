@@ -5,7 +5,7 @@ import (
 	"github.com/you06/sqlsmith-client/connection"
 	"github.com/you06/sqlsmith-client/util"
 	"github.com/juju/errors"
-	"github.com/ngaut/log"
+	// "github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
 )
 
@@ -74,7 +74,7 @@ func (e *Executor) abTestSelect(sql string) error {
 	}()
 	wg.Wait()
 
-	log.Info("select abtest err", err1, err2)
+	// log.Info("select abtest err", err1, err2)
 	if err := util.ErrorMustSame(err1, err2); err != nil {
 		return err
 	}

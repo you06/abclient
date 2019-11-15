@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"github.com/juju/errors"
-	"github.com/ngaut/log"
+	// "github.com/ngaut/log"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -32,7 +32,7 @@ func ErrorMustSame(err1, err2 error) error {
 
 	myerr1, ok1 := err1.(*mysql.MySQLError)
 	myerr2, ok2 := err2.(*mysql.MySQLError)
-	log.Info("ok status", ok1, ok2)
+	// log.Info("ok status", ok1, ok2)
 	if ok1 != ok2 {
 		return errors.Errorf("error type not same, if mysql error err1: %t, err2: %t", ok1, ok2)
 	}
