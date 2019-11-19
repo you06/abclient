@@ -51,6 +51,7 @@ func (e *Executor) abTestReloadSchema() error {
 	e.ss1 = smith.New()
 	e.ss1.LoadSchema(schema)
 	e.ss1.SetDB(e.dbname)
+	e.ss1.SetStable(e.opt.Stable)
 	return nil
 }
 

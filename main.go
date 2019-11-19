@@ -21,6 +21,7 @@ var (
 	clearDB      bool
 	logPath      string
 	reproduce    string
+	stable       bool
 )
 
 func init() {
@@ -31,6 +32,7 @@ func init() {
 	flag.BoolVar(&clearDB, "clear", false, "drop all tables in target database and then start testing")
 	flag.StringVar(&logPath, "log", "", "log path")
 	flag.StringVar(&reproduce, "re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
+	flag.BoolVar(&stable, "stable", false, "generate stable SQL without random or other env related expression")
 }
 
 func main() {
@@ -49,6 +51,7 @@ func main() {
 	opt.Clear = clearDB
 	opt.Log = logPath
 	opt.Reproduce = reproduce
+	opt.Stable = stable
 
 	if dsn1 == "" {
 		log.Fatalf("dsn1 can not be empty")

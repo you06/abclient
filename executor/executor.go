@@ -42,6 +42,7 @@ type Option struct {
 	Clear bool
 	Log string
 	Reproduce string
+	Stable bool
 }
 
 // Executor define test executor
