@@ -2,8 +2,8 @@ package connection
 
 import (
 	"fmt"
-	"github.com/you06/sqlsmith-client/pkg/logger"
-	"github.com/you06/sqlsmith-client/pkg/mysql"
+	"github.com/you06/doppelganger/pkg/logger"
+	"github.com/you06/doppelganger/pkg/mysql"
 	"github.com/juju/errors"
 )
 

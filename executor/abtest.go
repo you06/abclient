@@ -2,8 +2,8 @@ package executor
 
 import (
 	"sync"
-	"github.com/you06/sqlsmith-client/connection"
-	"github.com/you06/sqlsmith-client/util"
+	"github.com/you06/doppelganger/connection"
+	"github.com/you06/doppelganger/util"
 	"github.com/juju/errors"
 	// "github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"

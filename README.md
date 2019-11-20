@@ -1,6 +1,6 @@
-# SQLSmith Client
+# Doppelgänger
 
-This is the client of [SQLSmith-go](https://github.com/you06/sqlsmith-go).
+This is the client of [SQLSmith-go](https://github.com/you06/sqlsmith-go) to execute random generate SQLs in double side.
 
 ## Build
 
@@ -11,8 +11,8 @@ make
 ## Usage
 
 ```
-./bin/sqlsmith-client -h
-Usage of ./bin/sqlsmith-client:
+./bin/doppelganger -h
+Usage of ./bin/doppelganger:
   -V    print version
   -clear
         drop all tables in target database and then start testing
@@ -31,7 +31,7 @@ Usage of ./bin/sqlsmith-client:
 - ABtest Example
 
 ```
-./bin/sqlsmith-client -dsn1 "root:@tcp(127.0.0.1:3306)/sqlsmith" -dsn2 "root@tcp(127.0.0.1:4000)/sqlsmith" -log ./log
+./bin/doppelganger -dsn1 "root:@tcp(127.0.0.1:3306)/sqlsmith" -dsn2 "root@tcp(127.0.0.1:4000)/sqlsmith" -log ./log
 ```
 
 With empty log parameter, all logs will be print to terminal.

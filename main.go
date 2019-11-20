@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/you06/sqlsmith-client/executor"
-	"github.com/you06/sqlsmith-client/util"
+	"github.com/you06/doppelganger/executor"
+	"github.com/you06/doppelganger/util"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	_ "github.com/pingcap/tidb/types/parser_driver"
@@ -15,13 +15,14 @@ import (
 
 var (
 	printVersion bool
-	dsn1         string
-	dsn2         string
-	printSchema  bool
-	clearDB      bool
-	logPath      string
-	reproduce    string
-	stable       bool
+	dsn1        string
+	dsn2        string
+	printSchema bool
+	clearDB     bool
+	logPath     string
+	reproduce   string
+	stable      bool
+	concurrency int
 )
 
 func init() {
@@ -33,6 +34,7 @@ func init() {
 	flag.StringVar(&logPath, "log", "", "log path")
 	flag.StringVar(&reproduce, "re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
 	flag.BoolVar(&stable, "stable", false, "generate stable SQL without random or other env related expression")
+	flag.IntVar(&concurrency, "concurrency", 1, "test concurrency")
 }
 
 func main() {

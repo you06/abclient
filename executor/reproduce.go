@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"github.com/ngaut/log"
-	"github.com/you06/sqlsmith-client/util"
+	"github.com/you06/doppelganger/util"
 )
 
 var (

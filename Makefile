@@ -12,8 +12,8 @@ GOFILTER  := grep -vE 'vendor|render.Delims|bindata_assetfs|testutil|\.pb\.go'
 GOCHECKER := $(GOFILTER) | awk '{ print } END { if (NR > 0) { exit 1 } }'
 GOLINT    := go list ./... | grep -vE 'vendor' | xargs -L1 -I {} golint {} 2>&1 | $(GOCHECKER)
 
-LDFLAGS += -X "github.com/you06/sqlsmith-client/util.BuildTS=$(shell date -u '+%Y-%m-%d %I:%M:%S')"
-LDFLAGS += -X "github.com/you06/sqlsmith-client/util.BuildHash=$(shell git rev-parse HEAD)"
+LDFLAGS += -X "github.com/you06/doppelganger/util.BuildTS=$(shell date -u '+%Y-%m-%d %I:%M:%S')"
+LDFLAGS += -X "github.com/you06/doppelganger/util.BuildHash=$(shell git rev-parse HEAD)"
 
 GOBUILD=$(GO) build -ldflags '$(LDFLAGS)'
 
@@ -24,7 +24,7 @@ build: client
 all: check test manager agent sch-ctl notifier-mgr
 
 client:
-	$(GOBUILD) $(GOMOD) -o bin/sqlsmith-client *.go
+	$(GOBUILD) $(GOMOD) -o bin/doppelganger *.go
 
 clean:
 	@rm -rf bin/*
