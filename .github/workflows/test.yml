@@ -29,6 +29,4 @@ jobs:
         fi
 
     - name: Build
-      run: |
-        make clean
-        make client
+      run: make test

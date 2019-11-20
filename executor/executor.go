@@ -37,14 +37,6 @@ type SQL struct {
 	SQLStmt string
 }
 
-// Option struct
-type Option struct {
-	Clear bool
-	Log string
-	Reproduce string
-	Stable bool
-}
-
 // Executor define test executor
 type Executor struct {
 	dsn1   string

@@ -29,4 +29,7 @@ client:
 clean:
 	@rm -rf bin/*
 
-.PHONY: all clean client
+.PHONY: all clean client test
+
+test:
+	$(GOTEST) ./...
