@@ -5,6 +5,7 @@ import (
 	"os"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
+	"github.com/you06/doppelganger/util"
 )
 
 // Logger struct
@@ -35,6 +36,7 @@ func (l *Logger)init() (*Logger, error) {
 }
 
 func (l *Logger)writeLine(line string) error {
+	line = fmt.Sprintf("%s %s", util.CurrentTimeStrAsLog(), line)
 	if l.mute {
 		return nil
 	} else if l.print {

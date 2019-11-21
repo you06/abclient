@@ -15,20 +15,20 @@ func (e *Executor) smithGenerate() {
 	for {
 		var (
 			err error
-			rd = rand.Intn(100)
+			rd = rand.Intn(300)
 		)
 		// rd = 100
 		if rd == 0 {
 			err = e.generateDDLCreate()
-		} else if rd < 20 {
+		} else if rd < 80 {
 			err = e.generateInsert()
-		} else if rd < 40 {
+		} else if rd < 160 {
 			err = e.generateUpdate()
-		} else if rd < 50 {
+		} else if rd < 170 {
 			e.generateTxnBegin()
-		} else if rd < 55 {
+		} else if rd < 180 {
 			e.generateTxnCommit()
-		} else if rd < 60 {
+		} else if rd < 190 {
 			e.generateTxnRollback()
 		} else {
 			err = e.generateSelect()

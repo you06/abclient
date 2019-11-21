@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"os"
+	"time"
 	"github.com/juju/errors"
 	// "github.com/ngaut/log"
 	"github.com/go-sql-driver/mysql"
@@ -56,4 +57,13 @@ func FileExists(filename string) bool {
 			return false
 	}
 	return !info.IsDir()
+}
+
+// CurrentTimeStrAsLog return time format as "[2006/01/02 15:06:02.886 +08:00]"
+func CurrentTimeStrAsLog() string {
+	return fmt.Sprintf("[%s]", formatTimeStrAsLog(time.Now()))
+}
+
+func formatTimeStrAsLog(t time.Time) string {
+	return t.Format("2006/01/02 15:04:05.000 -07:00")
 }

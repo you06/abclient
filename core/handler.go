@@ -38,7 +38,7 @@ func (e *Executor) abTest() {
 		if err != nil {
 			e.logger.Infof("[FAIL] Exec SQL %s error %v", sql.SQLStmt, err)
 		} else {
-			e.logger.Infof("[SUCCESS] Exec SQL %s success", sql.SQLStmt)
+			// e.logger.Infof("[SUCCESS] Exec SQL %s success", sql.SQLStmt)
 		}
 	}
 }
