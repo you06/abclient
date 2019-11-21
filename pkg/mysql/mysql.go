@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"sync"
 	"context"
 	"database/sql"
 	"time"
@@ -12,7 +13,15 @@ import (
 
 // DBConnect wraps db
 type DBConnect struct {
-	db *sql.DB
+	sync.Mutex
+	db  *sql.DB
+	txn *sql.Tx
+}
+
+// DBAccessor can be txn snapshot or db it self
+type DBAccessor interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
 }
 
 // MustExec must execute sql or fatal
@@ -26,12 +35,16 @@ func (conn *DBConnect) MustExec(query string, args ...interface{}) sql.Result {
 
 // Exec execute sql
 func (conn *DBConnect) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return conn.db.Exec(query, args...)
+	conn.Lock()
+	defer conn.Unlock()
+	return conn.GetDBAccessor().Exec(query, args...)
 }
 
 // Query execute select statement
 func (conn *DBConnect) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return conn.db.Query(query, args...)
+	conn.Lock()
+	defer conn.Unlock()
+	return conn.GetDBAccessor().Query(query, args...)
 }
 
 // GetDB get real db object
@@ -39,10 +52,58 @@ func (conn *DBConnect) GetDB() *sql.DB {
 	return conn.db
 }
 
+// GetDBAccessor get DBAccessor interface
+func (conn *DBConnect) GetDBAccessor() DBAccessor {
+	if conn.txn != nil {
+		return conn.txn
+	}
+	return conn.db
+}
+
+// Begin a transaction
+func (conn *DBConnect) Begin() error {
+	conn.Lock()
+	defer conn.Unlock()
+	if conn.txn != nil {
+		return nil
+	}
+	txn, err := conn.db.Begin()
+	if err != nil {
+		return err
+	}
+	conn.txn = txn
+	return nil
+}
+
+// Commit a transaction
+func (conn *DBConnect) Commit() error {
+	conn.Lock()
+	defer conn.Unlock()
+	if conn.txn == nil {
+		return nil
+	}
+	txn := conn.txn
+	conn.txn = nil
+	return txn.Commit()
+}
+
+// Rollback a transaction
+func (conn *DBConnect) Rollback() error {
+	conn.Lock()
+	defer conn.Unlock()
+	if conn.txn == nil {
+		return nil
+	}
+	txn := conn.txn
+	conn.txn = nil
+	return txn.Rollback()
+}
+
 // CloseDB turn off db connection
 func (conn *DBConnect) CloseDB() error {
 	return conn.db.Close()
 }
+
 
 // RunWithRetry tries to run func in specified count
 func RunWithRetry(ctx context.Context, retryCnt int, interval time.Duration, f func() error) error {
@@ -61,7 +122,7 @@ func RunWithRetry(ctx context.Context, retryCnt int, interval time.Duration, f f
 		case <-time.After(interval):
 		}
 	}
-	return errors.Trace(err)
+	return err
 }
 
 // OpenDB opens db
@@ -73,7 +134,9 @@ func OpenDB(dsn string, maxIdleConns int) (*DBConnect, error) {
 
 	db.SetMaxIdleConns(maxIdleConns)
 	log.Info("DB opens successfully")
-	return &DBConnect{db}, nil
+	return &DBConnect{
+		db: db,
+	}, nil
 }
 
 // IsErrDupEntry returns true if error code = 1062

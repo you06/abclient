@@ -1,9 +1,11 @@
 package executor
 
 import (
+	"fmt"
 	"sync"
 	"github.com/you06/doppelganger/connection"
 	"github.com/you06/doppelganger/util"
+	"github.com/you06/doppelganger/pkg/types"
 	"github.com/juju/errors"
 	// "github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
@@ -17,22 +19,30 @@ func (e *Executor) abTest() {
 		)
 
 		switch sql.SQLType {
-		case SQLTypeReloadSchema:
+		case types.SQLTypeReloadSchema:
 			err = e.abTestReloadSchema()
-		case SQLTypeDMLSelect:
+		case types.SQLTypeDMLSelect:
 			err = e.abTestSelect(sql.SQLStmt)
-		case SQLTypeDMLUpdate:
+		case types.SQLTypeDMLUpdate:
 			err = e.abTestUpdate(sql.SQLStmt)
-		case SQLTypeDMLInsert:
+		case types.SQLTypeDMLInsert:
 			err = e.abTestInsert(sql.SQLStmt)
-		case SQLTypeDMLDelete:
+		case types.SQLTypeDMLDelete:
 			err = e.abTestDelete(sql.SQLStmt)
-		case SQLTypeDDLCreate:
+		case types.SQLTypeDDLCreate:
 			err = e.abTestCreateTable(sql.SQLStmt)
-		case SQLTypeExec:
+		case types.SQLTypeTxnBegin:
+			err = e.abTestTxnBegin()
+		case types.SQLTypeTxnCommit:
+			err = e.abTestTxnCommit()
+		case types.SQLTypeTxnRollback:
+			err = e.abTestTxnRollback()
+		case types.SQLTypeExec:
 			e.abTestExec(sql.SQLStmt)
-		case SQLTypeExit:
+		case types.SQLTypeExit:
 			e.Stop("receive exit SQL signal")
+		default:
+			panic(fmt.Sprintf("unhandled case %+v", sql))
 		}
 
 		if err != nil {
@@ -194,10 +204,7 @@ func (e *Executor) abTestCreateTable(sql string) error {
 	}()
 	wg.Wait()
 
-	if err := util.ErrorMustSame(err1, err2); err != nil {
-		return err
-	}
-	return nil
+	return util.ErrorMustSame(err1, err2)
 }
 
 // just execute
@@ -215,4 +222,34 @@ func (e *Executor) abTestExec(sql string) {
 		wg.Done()
 	}()
 	wg.Wait()
+}
+
+func (e *Executor) abTestTxnBegin() error {
+	var (
+		err1 error
+		err2 error
+	)
+	err1 = e.conn1.Begin()
+	err2 = e.conn2.Begin()
+	return util.ErrorMustSame(err1, err2)
+}
+
+func (e *Executor) abTestTxnCommit() error {
+	var (
+		err1 error
+		err2 error
+	)
+	err1 = e.conn1.Commit()
+	err2 = e.conn2.Commit()
+	return util.ErrorMustSame(err1, err2)
+}
+
+func (e *Executor) abTestTxnRollback() error {
+	var (
+		err1 error
+		err2 error
+	)
+	err1 = e.conn1.Rollback()
+	err2 = e.conn2.Rollback()
+	return util.ErrorMustSame(err1, err2)
 }

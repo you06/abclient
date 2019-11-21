@@ -4,6 +4,7 @@ package executor
 type Option struct {
 	Clear bool
 	Log string
+	LogSuffix string
 	Reproduce string
 	Stable bool
 }

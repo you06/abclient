@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/you06/doppelganger/core"
 	"github.com/you06/doppelganger/executor"
 	"github.com/you06/doppelganger/util"
 	"github.com/juju/errors"
@@ -45,22 +46,25 @@ func main() {
 	}
 
 	var (
-		exec *executor.Executor
+		exec *core.Executor
 		err error
-		opt = executor.Option{}
+		executorOption = executor.Option{}
+		coreOption = core.Option{}
 	)
 
-	opt.Clear = clearDB
-	opt.Log = logPath
-	opt.Reproduce = reproduce
-	opt.Stable = stable
+	executorOption.Clear = clearDB
+	executorOption.Log = logPath
+	executorOption.Reproduce = reproduce
+	executorOption.Stable = stable
+	coreOption.Stable = stable
+	coreOption.Concurrency = concurrency
 
 	if dsn1 == "" {
 		log.Fatalf("dsn1 can not be empty")
 	} else if dsn2 == "" {
-		exec, err = executor.New(dsn1, &opt)
+		exec, err = core.New(dsn1, &coreOption, &executorOption)
 	} else {
-		exec, err = executor.NewABTest(dsn1, dsn2, &opt)
+		exec, err = core.NewABTest(dsn1, dsn2, &coreOption, &executorOption)
 	}
 	if err != nil {
 		log.Fatalf("create executor error %v", errors.ErrorStack(err))
@@ -72,7 +76,9 @@ func main() {
 		}
 		os.Exit(0)
 	}
-	go exec.Start()
+	if err := exec.Start(); err != nil {
+		log.Fatalf("start exec error %v", err)
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc,

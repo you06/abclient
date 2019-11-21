@@ -1,9 +1,11 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
+	"github.com/you06/doppelganger/pkg/types"
 )
 
 func (e *Executor) singleTest() {
@@ -14,22 +16,30 @@ func (e *Executor) singleTest() {
 		)
 
 		switch sql.SQLType {
-		case SQLTypeReloadSchema:
+		case types.SQLTypeReloadSchema:
 			err = e.singleTestReloadSchema()
-		case SQLTypeDMLSelect:
+		case types.SQLTypeDMLSelect:
 			err = e.singleTestSelect(sql.SQLStmt)
-		case SQLTypeDMLUpdate:
+		case types.SQLTypeDMLUpdate:
 			err = e.singleTestUpdate(sql.SQLStmt)
-		case SQLTypeDMLInsert:
+		case types.SQLTypeDMLInsert:
 			err = e.singleTestInsert(sql.SQLStmt)
-		case SQLTypeDMLDelete:
+		case types.SQLTypeDMLDelete:
 			err = e.singleTestDelete(sql.SQLStmt)
-		case SQLTypeDDLCreate:
+		case types.SQLTypeDDLCreate:
 			err = e.singleTestCreateTable(sql.SQLStmt)
-		case SQLTypeExec:
+		case types.SQLTypeTxnBegin:
+			err = e.singleTestTxnBegin()
+		case types.SQLTypeTxnCommit:
+			err = e.singleTestTxnCommit()
+		case types.SQLTypeTxnRollback:
+			err = e.singleTestTxnRollback()
+		case types.SQLTypeExec:
 			e.singleTestExec(sql.SQLStmt)
-		case SQLTypeExit:
+		case types.SQLTypeExit:
 			e.Stop("receive exit SQL signal")
+		default:
+			panic(fmt.Sprintf("unhandled case %+v", sql))
 		}
 
 		if err != nil {
@@ -80,4 +90,16 @@ func (e *Executor) singleTestCreateTable(sql string) error {
 // just execute
 func (e *Executor) singleTestExec(sql string) {
 	_ = e.conn1.Exec(sql)
+}
+
+func (e *Executor) singleTestTxnBegin() error {
+	return errors.Trace(e.conn1.Begin())
+}
+
+func (e *Executor) singleTestTxnCommit() error {
+	return errors.Trace(e.conn1.Commit())
+}
+
+func (e *Executor) singleTestTxnRollback() error {
+	return errors.Trace(e.conn1.Rollback())
 }

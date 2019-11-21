@@ -1,4 +1,4 @@
-package executor
+package core 
 
 import (
 	"math/rand"
@@ -9,10 +9,8 @@ import (
 )
 
 func (e *Executor) smithGenerate() {
+	// go syncromous here for sqlsmith require first time init
 	e.prepare()
-	e.ch <- &types.SQL{
-		SQLType: types.SQLTypeReloadSchema,
-	}
 	log.Info("ready to generate")
 	for {
 		var (
@@ -26,6 +24,12 @@ func (e *Executor) smithGenerate() {
 			err = e.generateInsert()
 		} else if rd < 40 {
 			err = e.generateUpdate()
+		} else if rd < 50 {
+			e.generateTxnBegin()
+		} else if rd < 55 {
+			e.generateTxnCommit()
+		} else if rd < 60 {
+			e.generateTxnRollback()
 		} else {
 			err = e.generateSelect()
 		}
@@ -44,7 +48,7 @@ func (e *Executor) prepare() {
 }
 
 func (e *Executor) generateDDLCreate() error {
-	stmt, err := e.ss1.CreateTableStmt()
+	stmt, err := e.ss.CreateTableStmt()
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -59,7 +63,7 @@ func (e *Executor) generateDDLCreate() error {
 }
 
 func (e *Executor) generateSelect() error {
-	stmt, err := e.ss1.SelectStmt(4)
+	stmt, err := e.ss.SelectStmt(1)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -71,7 +75,7 @@ func (e *Executor) generateSelect() error {
 }
 
 func (e *Executor) generateUpdate() error {
-	stmt, err := e.ss1.UpdateStmt()
+	stmt, err := e.ss.UpdateStmt()
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -83,7 +87,7 @@ func (e *Executor) generateUpdate() error {
 }
 
 func (e *Executor) generateInsert() error {
-	stmt, err := e.ss1.InsertStmtAST()
+	stmt, err := e.ss.InsertStmtAST()
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -92,4 +96,25 @@ func (e *Executor) generateInsert() error {
 		SQLStmt: stmt,
 	}
 	return nil	
+}
+
+func (e *Executor) generateTxnBegin() {
+	e.ch <- &types.SQL{
+		SQLType: types.SQLTypeTxnBegin,
+		SQLStmt: "BEGIN",
+	}
+}
+
+func (e *Executor) generateTxnCommit() {
+	e.ch <- &types.SQL{
+		SQLType: types.SQLTypeTxnCommit,
+		SQLStmt: "COMMIT",
+	}
+}
+
+func (e *Executor) generateTxnRollback() {
+	e.ch <- &types.SQL{
+		SQLType: types.SQLTypeTxnRollback,
+		SQLStmt: "ROLLBACK",
+	}
 }
