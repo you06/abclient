@@ -13,7 +13,7 @@ type Generator interface {
 	// the generated SQLs after this will be under this database
 	SetDB(db string)
 	// SetStable is a trigger for whether generate random or some database-basicinfo-dependent data
-	// eg. SetStable(true) will disable both rand() and user() functions cause they both make unstable result in different database
+	// eg. SetStable(true) will disable both rand() and user() functions since they both make unstable result in different database
 	SetStable(stable bool)
 	// SelectStmt generate select SQL
 	SelectStmt() string
