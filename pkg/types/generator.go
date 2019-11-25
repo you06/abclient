@@ -6,9 +6,10 @@ type Generator interface {
 	// For each record
 	// record[0] dbname
 	// record[1] table name
-	// record[2] column name
-	// record[3] column type
-	ReloadSchema([][4]string) error
+	// record[2] table type
+	// record[3] column name
+	// record[4] column type
+	ReloadSchema([][5]string) error
 	// SetDB set operation database
 	// the generated SQLs after this will be under this database
 	SetDB(db string)
