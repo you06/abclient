@@ -40,3 +40,13 @@ func (c *Connection) Prepare(db string) {
 	c.db.MustExec(fmt.Sprintf(dropDatabaseSQL, db))
 	c.db.MustExec(fmt.Sprintf(createDatabaseSQL, db))
 }
+
+// CloseDB close connection
+func (c *Connection) CloseDB() error {
+	return c.db.CloseDB()
+}
+
+// ReConnect rebuild connection
+func (c *Connection) ReConnect() error {
+	return c.db.ReConnect()
+}

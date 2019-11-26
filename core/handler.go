@@ -2,6 +2,8 @@ package core
 
 import (
 	"math/rand"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 	"github.com/you06/doppelganger/executor"
 	"github.com/you06/doppelganger/pkg/types"
 )
@@ -26,13 +28,40 @@ func (e *Executor) abTest() {
 			sql = <- e.ch
 		)
 
+		// Exec SQL
 		switch sql.SQLType {
 		case types.SQLTypeReloadSchema:
 			err = e.reloadSchema()
+			if err != nil {
+				log.Fatalf("reload schema failed %+v\n", errors.ErrorStack(err))
+			}
 		case types.SQLTypeExit:
 			e.Stop("receive exit SQL signal")
+		case types.SQLTypeTxnBegin:
+			executor := e.randFreeExecutor()
+			if executor != nil {
+				e.deadlockCh <- executor.GetID()
+				executor.ExecSQL(sql)
+				<-executor.TxnReadyCh
+			}
+		case types.SQLTypeTxnCommit, types.SQLTypeTxnRollback:
+			executor := e.randBusyExecutor()
+			if executor != nil {
+				e.deadlockCh <- executor.GetID()
+				executor.ExecSQL(sql)
+				<-executor.TxnReadyCh
+			}
+		case types.SQLTypeDDLCreate:
+			executor := e.tryRandFreeExecutor()
+			e.deadlockCh <- executor.GetID()
+			executor.ExecSQL(sql)
+			<-executor.TxnReadyCh
 		default:
-			e.randExecutor().ExecSQL(sql)	
+			executor := e.randBusyExecutor()
+			if executor != nil {
+				e.deadlockCh <- executor.GetID()
+				executor.ExecSQL(sql)
+			}
 		}
 
 		if err != nil {
@@ -44,5 +73,53 @@ func (e *Executor) abTest() {
 }
 
 func (e *Executor) randExecutor() *executor.Executor {
+	e.Lock()
+	defer e.Unlock()
 	return e.executors[rand.Intn(len(e.executors))]
+}
+
+func (e *Executor) randFreeExecutor() *executor.Executor {
+	e.Lock()
+	defer e.Unlock()
+	var notInTxns []*executor.Executor
+	for _, e := range e.executors {
+		if !e.IfTxn() {
+			notInTxns = append(notInTxns, e)
+		}
+	}
+	if len(notInTxns) == 0 {
+		return nil
+	}
+	return notInTxns[rand.Intn(len(notInTxns))]
+}
+
+func (e *Executor) randBusyExecutor() *executor.Executor {
+	e.Lock()
+	defer e.Unlock()
+	var InTxns []*executor.Executor
+	for _, e := range e.executors {
+		if e.IfTxn() {
+			InTxns = append(InTxns, e)
+		}
+	}
+	if len(InTxns) == 0 {
+		return nil
+	}
+	return InTxns[rand.Intn(len(InTxns))]
+}
+
+// get free executor if exist, unless get a random executor
+func (e *Executor) tryRandFreeExecutor() *executor.Executor {
+	if e := e.randFreeExecutor(); e != nil {
+		return e
+	}
+	return e.randExecutor()
+}
+
+// get free executor if exist, unless get a random executor
+func (e *Executor) tryRandBusyExecutor() *executor.Executor {
+	if e := e.randBusyExecutor(); e != nil {
+		return e
+	}
+	return e.randExecutor()
 }

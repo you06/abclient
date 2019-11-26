@@ -45,11 +45,15 @@ func (e *Executor) abTest() {
 			panic(fmt.Sprintf("unhandled case %+v", sql))
 		}
 
-		if err != nil {
-			e.logger.Infof("[FAIL] Exec SQL %s error %v", sql.SQLStmt, err)
-		} else {
-			e.logger.Infof("[SUCCESS] Exec SQL %s success", sql.SQLStmt)
-		}
+		e.abTestLog(sql.SQLStmt, err)
+	}
+}
+
+func (e *Executor) abTestLog(stmt string, err error) {
+	if err != nil {
+		e.logger.Infof("[FAIL] Exec SQL %s error %v", stmt, err)
+	} else {
+		e.logger.Infof("[SUCCESS] Exec SQL %s success", stmt)
 	}
 }
 
@@ -63,6 +67,39 @@ func (e *Executor) abTestReloadSchema() error {
 	e.ss1.SetDB(e.dbname)
 	e.ss1.SetStable(e.opt.Stable)
 	return nil
+}
+
+// ABTestSelect expose abTestSelect
+func (e *Executor) ABTestSelect(sql string) error {
+	err := e.abTestSelect(sql)
+	e.abTestLog(sql, err)
+	return err
+}
+
+// ABTestTxnBegin export abTestTxnBegin
+func (e *Executor) ABTestTxnBegin() error {
+	err := e.abTestTxnBegin()
+	e.abTestLog("BEGIN", err)
+	return err
+}
+
+// ABTestTxnCommit export abTestTxnCommit
+func (e *Executor) ABTestTxnCommit() error {
+	err := e.abTestTxnCommit()
+	e.abTestLog("COMMIT", err)
+	return err
+}
+
+// ABTestTxnRollback export abTestTxnRollback
+func (e *Executor) ABTestTxnRollback() error {
+	err := e.abTestTxnRollback()
+	e.abTestLog("ROLLBACK", err)
+	return err
+}
+
+// ABTestIfTxn expose abTestIfTxn
+func (e *Executor) ABTestIfTxn() bool {
+	return e.abTestIfTxn()
 }
 
 // DML
@@ -196,14 +233,16 @@ func (e *Executor) abTestCreateTable(sql string) error {
 	wg.Add(2)
 	go func() {
 		err1 = e.conn1.ExecDDL(sql)
+		_ = e.conn1.Commit()
 		wg.Done()
 	}()
 	go func() {
 		err2 = e.conn2.ExecDDL(sql)
+		_ = e.conn2.Commit()
 		wg.Done()
 	}()
 	wg.Wait()
-
+	e.TxnReadyCh <- struct{}{}
 	return util.ErrorMustSame(err1, err2)
 }
 
@@ -231,6 +270,8 @@ func (e *Executor) abTestTxnBegin() error {
 	)
 	err1 = e.conn1.Begin()
 	err2 = e.conn2.Begin()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
 	return util.ErrorMustSame(err1, err2)
 }
 
@@ -241,6 +282,8 @@ func (e *Executor) abTestTxnCommit() error {
 	)
 	err1 = e.conn1.Commit()
 	err2 = e.conn2.Commit()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
 	return util.ErrorMustSame(err1, err2)
 }
 
@@ -251,5 +294,11 @@ func (e *Executor) abTestTxnRollback() error {
 	)
 	err1 = e.conn1.Rollback()
 	err2 = e.conn2.Rollback()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
 	return util.ErrorMustSame(err1, err2)
+}
+
+func (e *Executor) abTestIfTxn() bool {
+	return e.conn1.IfTxn() || e.conn2.IfTxn()
 }

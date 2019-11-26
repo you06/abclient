@@ -110,3 +110,8 @@ func (c *Connection) Rollback() error {
 	c.logSQL("ROLLBACK", time.Now().Sub(start), err)
 	return err
 }
+
+// IfTxn show if in a transaction
+func (c *Connection) IfTxn() bool {
+	return c.db.IfTxn()
+}

@@ -2,11 +2,12 @@ package executor
 
 // Option struct
 type Option struct {
-	Clear bool
-	Log string
+	ID        int
+	Clear     bool
+	Log       string
 	LogSuffix string
 	Reproduce string
-	Stable bool
+	Stable    bool
 }
 
 // Clone option

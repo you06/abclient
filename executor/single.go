@@ -63,6 +63,31 @@ func (e *Executor) singleTestReloadSchema() error {
 	return nil
 }
 
+// SingleTestSelect expose singleTestSelect
+func (e *Executor) SingleTestSelect(sql string) error {
+	return e.singleTestSelect(sql)
+}
+
+// SingleTestTxnBegin export singleTestTxnBegin
+func (e *Executor) SingleTestTxnBegin() error {
+	return e.singleTestTxnBegin()
+}
+
+// SingleTestTxnCommit export singleTestTxnCommit
+func (e *Executor) SingleTestTxnCommit() error {
+	return e.singleTestTxnCommit()
+}
+
+// SingleTestTxnRollback export singleTestTxnRollback
+func (e *Executor) SingleTestTxnRollback() error {
+	return e.singleTestTxnRollback()
+}
+
+// SingleTestIfTxn expose singleTestIfTxn
+func (e *Executor) SingleTestIfTxn() bool {
+	return e.singleTestIfTxn()
+}
+
 // DML
 func (e *Executor) singleTestSelect(sql string) error {
 	_, err := e.conn1.Select(sql)
@@ -93,13 +118,26 @@ func (e *Executor) singleTestExec(sql string) {
 }
 
 func (e *Executor) singleTestTxnBegin() error {
-	return errors.Trace(e.conn1.Begin())
+	err := e.conn1.Begin()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
+	return errors.Trace(err)
 }
 
 func (e *Executor) singleTestTxnCommit() error {
-	return errors.Trace(e.conn1.Commit())
+	err := e.conn1.Commit()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
+	return errors.Trace(err)
 }
 
 func (e *Executor) singleTestTxnRollback() error {
-	return errors.Trace(e.conn1.Rollback())
+	err := e.conn1.Rollback()
+	// continue generate
+	e.TxnReadyCh <- struct{}{}
+	return errors.Trace(err)
+}
+
+func (e *Executor) singleTestIfTxn() bool {
+	return e.conn1.IfTxn()
 }

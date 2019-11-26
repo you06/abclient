@@ -14,6 +14,7 @@ import (
 // DBConnect wraps db
 type DBConnect struct {
 	sync.Mutex
+	dsn string
 	db  *sql.DB
 	txn *sql.Tx
 }
@@ -60,6 +61,11 @@ func (conn *DBConnect) GetDBAccessor() DBAccessor {
 	return conn.db
 }
 
+// IfTxn show if in a transaction
+func (conn *DBConnect) IfTxn() bool {
+	return conn.txn != nil
+}
+
 // Begin a transaction
 func (conn *DBConnect) Begin() error {
 	conn.Lock()
@@ -104,6 +110,18 @@ func (conn *DBConnect) CloseDB() error {
 	return conn.db.Close()
 }
 
+// ReConnect rebuild connection
+func (conn *DBConnect) ReConnect() error {
+	if err := conn.CloseDB(); err != nil {
+		return err
+	}
+	db, err := sql.Open("mysql", conn.dsn)
+	if err != nil {
+		return err
+	}
+	conn.db = db
+	return nil
+}
 
 // RunWithRetry tries to run func in specified count
 func RunWithRetry(ctx context.Context, retryCnt int, interval time.Duration, f func() error) error {
@@ -133,9 +151,10 @@ func OpenDB(dsn string, maxIdleConns int) (*DBConnect, error) {
 	}
 
 	db.SetMaxIdleConns(maxIdleConns)
-	log.Info("DB opens successfully")
+	// log.Info("DB opens successfully")
 	return &DBConnect{
 		db: db,
+		dsn: dsn,
 	}, nil
 }
 

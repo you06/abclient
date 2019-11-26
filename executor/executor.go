@@ -19,17 +19,22 @@ var (
 
 // Executor define test executor
 type Executor struct {
-	dsn1   string
-	dsn2   string
-	conn1  *connection.Connection
-	conn2  *connection.Connection
-	ss1    *smith.SQLSmith
-	ss2    *smith.SQLSmith
-	dbname string
-	mode   string
-	ch     chan *types.SQL
-	opt    *Option
-	logger *logger.Logger
+	id         int
+	dsn1       string
+	dsn2       string
+	conn1      *connection.Connection
+	conn2      *connection.Connection
+	ss1        *smith.SQLSmith
+	ss2        *smith.SQLSmith
+	dbname     string
+	mode       string
+	opt        *Option
+	logger     *logger.Logger
+	ch         chan *types.SQL
+	// Since we must ensure no other transactions commit or begin between the transaction start time points of abtest
+	// when a transaction begins/commits/rollbacks, generator wait for it ready for both A/B side
+	// This channel is for sending signal to generator when both A/B side's begin/commit/rollback are ready
+	TxnReadyCh chan struct{}
 }
 
 // New create Executor
@@ -51,10 +56,12 @@ func New(dsn string, opt *Option) (*Executor, error) {
 		return nil, errors.Trace(err)
 	}
 	return &Executor{
+		id: opt.ID,
 		dsn1:  dsn,
 		conn1: conn,
 		mode:  "single",
 		ch: make(chan *types.SQL, 1),
+		TxnReadyCh: make(chan struct{}, 1),
 		dbname: dbnameRegex.FindString(dsn),
 		opt: opt,
 		logger: l,
@@ -87,12 +94,14 @@ func NewABTest(dsn1, dsn2 string, opt *Option) (*Executor, error) {
 		return nil, errors.Trace(err)
 	}
 	return &Executor{
+		id: opt.ID,
 		dsn1:  dsn1,
 		dsn2:  dsn2,
 		conn1: conn1,
 		conn2: conn2,
 		mode:  "abtest",
 		ch: make(chan *types.SQL, 1),
+		TxnReadyCh: make(chan struct{}, 1),
 		dbname: dbnameRegex.FindString(dsn1),
 		opt: opt,
 		logger: l,
@@ -131,4 +140,9 @@ func (e *Executor) Start() {
 func (e *Executor) Stop(msg string) {
 	log.Infof("[STOP] message: %s\n", msg)
 	os.Exit(0)
+}
+
+// GetID return executor id
+func (e *Executor) GetID() int {
+	return e.id
 }
