@@ -2,16 +2,17 @@ package core
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 	"time"
-	"math/rand"
 	"os"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
 	"github.com/you06/doppelganger/pkg/types"
 	"github.com/you06/doppelganger/executor"
+	"github.com/you06/doppelganger/util"
 )
 
 func (e *Executor) reloadSchema() error {
@@ -30,19 +31,62 @@ func (e *Executor) startDataCompare() {
 	switch e.mode {
 	case "abtest":
 		c := time.Tick(time.Minute)
+		time := 0
 		for range c {
-			go func() {
-				result, err := e.abTestCompareData()
+			time++
+			go func(time int) {
+				log.Info("ready to compare data")
+				result, err := e.abTestCompareData(true)
 				log.Info("test compare data result", result)
 				if err != nil {
 					log.Fatalf("compare data error %+v", errors.ErrorStack(err))
 				}
-			}()
+				if time == 10 {
+					os.Exit(0)
+				}
+			}(time)
 		}
 	}
 }
 
-func (e *Executor) abTestCompareData() (bool, error) {
+// abTestCompareDataWithoutCommit take snapshot without other transactions all committed
+// this function can run async and channel is for waiting taking snapshot complete
+func (e *Executor) abTestCompareDataWithoutCommit(ch chan struct{}) {
+	// start a temp session for keep the snapshot of state
+	opt := e.execOpt.Clone()
+	opt.Mute = true
+	compareExecutor, err := executor.NewABTest(e.dsn1, e.dsn2, opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// schema should be fetch first
+	schema, err := compareExecutor.GetConn().FetchSchema(e.dbname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := compareExecutor.ABTestTxnBegin(); err != nil {
+		log.Fatal(err)
+	}
+	sqls := makeCompareSQLs(schema)
+	if err := compareExecutor.ABTestSelect(sqls[0]); err != nil {
+		log.Fatal(err)
+	}
+	begin := util.CurrentTimeStrAsLog()
+	ch <- struct{}{}
+	
+	time.Sleep(time.Duration(rand.Intn(1000))*time.Millisecond)
+	if err != nil {
+		log.Fatal("get schema err %+v", errors.ErrorStack(err))
+	}
+	for _, sql := range sqls {
+		if err := compareExecutor.ABTestSelect(sql); err != nil {
+			log.Fatalf("inconsistency when exec %s compare data %+v, begin: %s\n", sql, err, begin)
+		}
+	}
+	log.Info("consistency check pass")
+}
+
+func (e *Executor) abTestCompareData(delay bool) (bool, error) {
 	// only for abtest
 	if e.mode != "abtest" {
 		return true, nil
@@ -63,36 +107,44 @@ func (e *Executor) abTestCompareData() (bool, error) {
 	e.Lock()
 	// no async here to ensure all transactions are committed or rollbacked in order
 	// use resolveDeadLock func to avoid deadlock
-	e.resolveDeadLock(e.lastExecID)
+	e.resolveDeadLock()
 	// for _, executor := range e.executors {
 	// 	if err := executor.ABTestTxnCommit(); err != nil {
 	// 		return false, errors.Trace(err)
 	// 	}
 	// 	<- executor.TxnReadyCh
 	// }
+	// schema should be fetch first
+	schema, err := compareExecutor.GetConn().FetchSchema(e.dbname)
+	if err != nil {
+		e.Unlock()
+		return false, errors.Trace(err)
+	}
 	if err := compareExecutor.ABTestTxnBegin(); err != nil {
 		e.Unlock()
 		return false, errors.Trace(err)
 	}
+	sqls := makeCompareSQLs(schema)
+	if err := compareExecutor.ABTestSelect(sqls[0]); err != nil {
+		log.Fatal(err)
+	}
 	<- compareExecutor.TxnReadyCh
+	begin := util.CurrentTimeStrAsLog()
 	// free the lock since the compare has already got the same snapshot in both side
 	// go on other transactions
-	// defer here for protect environmentz
+	// defer here for protect environment
 	defer e.Unlock()
 
-	time.Sleep(time.Duration(rand.Intn(5))*time.Second)
-	schema, err := compareExecutor.GetConn().FetchSchema(e.dbname)
-	if err != nil {
-		return false, errors.Trace(err)
+	// delay will hold on this snapshot and check it later
+	if delay {
+		time.Sleep(time.Duration(rand.Intn(5))*time.Second)
 	}
-	sqls := makeCompareSQLs(schema)
 	for _, sql := range sqls {
 		if err := compareExecutor.ABTestSelect(sql); err != nil {
-			log.Fatalf("inconsistency when exec %s compare data %+v\n", sql, err)
+			log.Fatalf("inconsistency when exec %s compare data %+v, begin: %s\n", sql, err, begin)
 		}
 	}
 	log.Info("consistency check pass")
-	os.Exit(0)
 	return true, nil
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/you06/doppelganger/util"
 	"github.com/you06/doppelganger/pkg/types"
 	"github.com/juju/errors"
-	// "github.com/ngaut/log"
 	smith "github.com/you06/sqlsmith-go"
 )
 
@@ -17,6 +16,7 @@ func (e *Executor) abTest() {
 			err error
 			sql = <- e.ch
 		)
+		e.Lock()
 
 		switch sql.SQLType {
 		case types.SQLTypeReloadSchema:
@@ -46,6 +46,7 @@ func (e *Executor) abTest() {
 		}
 
 		e.abTestLog(sql.SQLStmt, err)
+		e.Unlock()
 	}
 }
 
@@ -72,6 +73,34 @@ func (e *Executor) abTestReloadSchema() error {
 // ABTestSelect expose abTestSelect
 func (e *Executor) ABTestSelect(sql string) error {
 	err := e.abTestSelect(sql)
+	e.abTestLog(sql, err)
+	return err
+}
+
+// ABTestInsert expose abTestInsert
+func (e *Executor) ABTestInsert(sql string) error {
+	err := e.abTestInsert(sql)
+	e.abTestLog(sql, err)
+	return err
+}
+
+// ABTestUpdate expose abTestUpdate
+func (e *Executor) ABTestUpdate(sql string) error {
+	err := e.abTestUpdate(sql)
+	e.abTestLog(sql, err)
+	return err
+}
+
+// ABTestDelete expose abTestDelete
+func (e *Executor) ABTestDelete(sql string) error {
+	err := e.abTestDelete(sql)
+	e.abTestLog(sql, err)
+	return err
+}
+
+// ABTestCreateTable expose abTestCreateTable
+func (e *Executor) ABTestCreateTable(sql string) error {
+	err := e.abTestCreateTable(sql)
 	e.abTestLog(sql, err)
 	return err
 }
@@ -146,7 +175,7 @@ func (e *Executor) abTestSelect(sql string) error {
 				item2 = row2[rIndex]
 			)
 			if err := item1.MustSame(item2); err != nil {
-				return err
+				return errors.Errorf("%s, row index %d, column index %d", err.Error(), index, rIndex)
 			}
 		}
 	}

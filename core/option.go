@@ -4,4 +4,5 @@ package core
 type Option struct {
 	Concurrency int
 	Stable bool
+	Reproduce string
 }

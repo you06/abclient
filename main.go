@@ -33,7 +33,7 @@ func init() {
 	flag.StringVar(&dsn2, "dsn2", "", "dsn2")
 	flag.BoolVar(&clearDB, "clear", false, "drop all tables in target database and then start testing")
 	flag.StringVar(&logPath, "log", "", "log path")
-	flag.StringVar(&reproduce, "re", "", "reproduce from log, path:line, will execute to the line number, will not execute the given line")
+	flag.StringVar(&reproduce, "re", "", "reproduce from logs, dir:table, will execute only the given table unless all table")
 	flag.BoolVar(&stable, "stable", false, "generate stable SQL without random or other env related expression")
 	flag.IntVar(&concurrency, "concurrency", 1, "test concurrency")
 }
@@ -58,6 +58,7 @@ func main() {
 	executorOption.Stable = stable
 	coreOption.Stable = stable
 	coreOption.Concurrency = concurrency
+	coreOption.Reproduce = reproduce
 
 	if dsn1 == "" {
 		log.Fatalf("dsn1 can not be empty")

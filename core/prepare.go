@@ -11,17 +11,18 @@ var (
 	}
 	mustExecSQLsIgnoreErr = []string{
 		`SET @@GLOBAL.TIDB_TXN_MODE="pessimistic"`,
+		`SET @@GLOBAL.explicit_defaults_for_timestamp=1`,
 	}
 )
 
 func (e *Executor) mustExec() error {
+	for _, sql := range mustExecSQLsIgnoreErr {
+		e.coreExec.ExecIgnoreErr(sql)
+	}
 	for _, sql := range mustExecSQLs {
 		if err := e.coreExec.Exec(sql); err != nil {
 			return errors.Trace(err)
 		}
-	}
-	for _, sql := range mustExecSQLsIgnoreErr {
-		e.coreExec.ExecIgnoreErr(sql)
 	}
 	return e.reConnect()
 }

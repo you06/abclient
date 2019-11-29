@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	maxExecuteTime = 10.0 // Second
+	maxExecuteTime = 4.0 // Second
 )
 
 func (e *Executor) watchDeadLock() {
@@ -20,40 +20,48 @@ func (e *Executor) watchDeadLock() {
 				// deadlock detected
 				e.Lock()
 				log.Info("deadlock detected")
-				e.resolveDeadLock(e.lastExecID)
+				e.resolveDeadLock()
 				e.Unlock()
 			}
 		}
 	}()
 	for {
-		e.lastExecID = <- e.deadlockCh
+		e.order.Push(<- e.deadlockCh)
 		lastExecTime = time.Now()
 	}
 }
 
-func (e *Executor) resolveDeadLock(lastExecID int) {
-	log.Infof("last execute ID is %d\n", lastExecID)
-	var lastResolveExecutor *executor.Executor
-	for _, executor := range e.executors {
-		if executor.GetID() == lastExecID {
-			lastResolveExecutor = executor
-			continue
+func (e *Executor) resolveDeadLock() {
+	// log.Infof("last execute ID is %d\n", lastExecID)
+	// var lastResolveExecutor *executor.Executor
+	// for _, executor := range e.executors {
+	// 	if executor.GetID() == lastExecID {
+	// 		lastResolveExecutor = executor
+	// 		continue
+	// 	}
+	// 	e.resolveDeadLockOne(executor)
+	// }
+	// e.resolveDeadLockOne(lastResolveExecutor)
+	for e.order.Next() {
+		for _, executor := range e.executors {
+			if executor.GetID() == e.order.Val() {
+				time.Sleep(2*time.Millisecond)
+				e.resolveDeadLockOne(executor)
+			}
 		}
-		e.resolveDeadLockOne(executor)
 	}
-	e.resolveDeadLockOne(lastResolveExecutor)
 }
 
 func (e *Executor) resolveDeadLockOne(executor *executor.Executor) {
 	if executor == nil {
 		return
 	}
-	log.Infof("resolve lock on executor-%d\n", executor.GetID())
+	// log.Infof("resolve lock on executor-%d\n", executor.GetID())
 	if rand.Float64() < 0.5 {
 		_ = executor.TxnCommit()
 	} else {
 		_ = executor.TxnRollback()
 	}
 	<- executor.TxnReadyCh
-	log.Infof("resolve lock done executor-%d\n", executor.GetID())
+	// log.Infof("resolve lock done executor-%d\n", executor.GetID())
 }

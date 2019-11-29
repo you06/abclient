@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"sync"
+	"path"
 	"github.com/ngaut/log"
 	"github.com/you06/doppelganger/executor"
 	"github.com/you06/doppelganger/pkg/logger"
@@ -29,13 +30,13 @@ type Executor struct {
 	coreOpt     *Option
 	execOpt     *executor.Option
 	executors   []*executor.Executor
-	lastExecID  int
 	ss          *smith.SQLSmith
 	ch          chan *types.SQL
 	logger      *logger.Logger
 	dbname      string
 	mode        string
 	deadlockCh  chan int
+	order       *types.Order
 	// DSN here is for fetch schema only
 	coreConn  *connection.Connection
 	coreExec  *executor.Executor
@@ -49,9 +50,13 @@ func New(dsn string, coreOpt *Option, execOpt *executor.Option) (*Executor, erro
 		execOpt: execOpt,
 		ch: make(chan *types.SQL, 1),
 		deadlockCh: make(chan int, 1),
+		order: types.NewOrder(),
 		mode: "single",
 	}
 
+	if coreOpt.Reproduce != "" {
+		execOpt.Mute = true
+	}
 	log.Info("coreOpt.Concurrency is", coreOpt.Concurrency)
 	for i := 0; i < coreOpt.Concurrency; i++ {
 		opt := execOpt.Clone()
@@ -75,9 +80,13 @@ func NewABTest(dsn1, dsn2 string, coreOpt *Option, execOpt *executor.Option) (*E
 		execOpt: execOpt,
 		ch: make(chan *types.SQL, 1),
 		deadlockCh: make(chan int, 1),
+		order: types.NewOrder(),
 		mode: "abtest",
 	}
 
+	if coreOpt.Reproduce != "" {
+		execOpt.Mute = true
+	}
 	log.Info("coreOpt.Concurrency is", coreOpt.Concurrency)
 	for i := 0; i < coreOpt.Concurrency; i++ {
 		opt := execOpt.Clone()
@@ -134,10 +143,19 @@ func (e *Executor) Start() error {
 	for _, executor := range e.executors {
 		go executor.Start()
 	}
-	go e.watchDeadLock()
-	go e.smithGenerate()
-	go e.startHandler()
-	go e.startDataCompare()
+	if e.coreOpt.Reproduce != "" {
+		l, err := logger.New(path.Join(e.coreOpt.Reproduce, "reproduce.log"), false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		e.logger = l
+		go e.reproduce()
+	} else {
+		go e.watchDeadLock()
+		go e.smithGenerate()
+		go e.startHandler()
+		go e.startDataCompare()
+	}
 	return nil
 }
 

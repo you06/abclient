@@ -8,6 +8,7 @@ type Option struct {
 	LogSuffix string
 	Reproduce string
 	Stable    bool
+	Mute      bool
 }
 
 // Clone option

@@ -59,6 +59,15 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// DirExists checks if a dir exists
+func DirExists(dir string) bool {
+	info, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+			return false
+	}
+	return info.IsDir()
+}
+
 // CurrentTimeStrAsLog return time format as "[2006/01/02 15:06:02.886 +08:00]"
 func CurrentTimeStrAsLog() string {
 	return fmt.Sprintf("[%s]", formatTimeStrAsLog(time.Now()))

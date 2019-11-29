@@ -68,6 +68,26 @@ func (e *Executor) SingleTestSelect(sql string) error {
 	return e.singleTestSelect(sql)
 }
 
+// SingleTestInsert expose singleTestInsert
+func (e *Executor) SingleTestInsert(sql string) error {
+	return e.singleTestInsert(sql)
+}
+
+// SingleTestUpdate expose singleTestUpdate
+func (e *Executor) SingleTestUpdate(sql string) error {
+	return e.singleTestUpdate(sql)
+}
+
+// SingleTestDelete expose singleTestDelete
+func (e *Executor) SingleTestDelete(sql string) error {
+	return e.singleTestDelete(sql)
+}
+
+// SingleTestCreateTable expose singleTestCreateTable
+func (e *Executor) SingleTestCreateTable(sql string) error {
+	return e.singleTestCreateTable(sql)
+}
+
 // SingleTestTxnBegin export singleTestTxnBegin
 func (e *Executor) SingleTestTxnBegin() error {
 	return e.singleTestTxnBegin()

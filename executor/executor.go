@@ -5,6 +5,7 @@ import (
 	"path"
 	"os"
 	"regexp"
+	"sync"
 	"github.com/you06/doppelganger/connection"
 	"github.com/you06/doppelganger/pkg/logger"
 	"github.com/you06/doppelganger/pkg/types"
@@ -19,22 +20,25 @@ var (
 
 // Executor define test executor
 type Executor struct {
-	id         int
-	dsn1       string
-	dsn2       string
-	conn1      *connection.Connection
-	conn2      *connection.Connection
-	ss1        *smith.SQLSmith
-	ss2        *smith.SQLSmith
-	dbname     string
-	mode       string
-	opt        *Option
-	logger     *logger.Logger
-	ch         chan *types.SQL
+	sync.Mutex
+	id          int
+	dsn1        string
+	dsn2        string
+	conn1       *connection.Connection
+	conn2       *connection.Connection
+	ss1         *smith.SQLSmith
+	ss2         *smith.SQLSmith
+	dbname      string
+	mode        string
+	opt         *Option
+	logger      *logger.Logger
+	ch          chan *types.SQL
+	stmts       []*types.SQL
+	stmtResults []*stmtResult
 	// Since we must ensure no other transactions commit or begin between the transaction start time points of abtest
 	// when a transaction begins/commits/rollbacks, generator wait for it ready for both A/B side
 	// This channel is for sending signal to generator when both A/B side's begin/commit/rollback are ready
-	TxnReadyCh chan struct{}
+	TxnReadyCh  chan struct{}
 }
 
 // New create Executor
@@ -47,6 +51,7 @@ func New(dsn string, opt *Option) (*Executor, error) {
 
 	conn, err := connection.New(dsn, &connection.Option{
 		Log: connLogPath,
+		Mute: opt.Mute,
 	})
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -79,12 +84,14 @@ func NewABTest(dsn1, dsn2 string, opt *Option) (*Executor, error) {
 
 	conn1, err := connection.New(dsn1, &connection.Option{
 		Log: conn1LogPath,
+		Mute: opt.Mute,
 	})
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 	conn2, err := connection.New(dsn2, &connection.Option{
 		Log: conn2LogPath,
+		Mute: opt.Mute,
 	})
 	if err != nil {
 		return nil, errors.Trace(err)
